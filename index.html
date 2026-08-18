@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resume Press</title>
+<style>
+  :root{
+    --ink:#15171a;
+    --ink-soft:#4a5058;
+    --rule:#c9ced6;
+    --shell:#1c1f24;
+    --shell-2:#252930;
+    --shell-line:#3a4049;
+    --shell-text:#c8cdd6;
+    --shell-dim:#7d858f;
+    --ok:#5fbf7f;
+    --warn:#e0a750;
+    --bad:#e0705f;
+
+    --fs: 10.2pt;
+    --lh: 1.30;
+    --pad-y: 12mm;
+    --pad-x: 14mm;
+    --page-w: 210mm;
+    --page-h: 297mm;
+    --face: Georgia, 'Times New Roman', serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--shell);
+    color:var(--shell-text);
+    font:14px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;
+    flex-direction:column;
+  }
+
+  header{
+    display:flex;align-items:center;gap:14px;
+    padding:10px 16px;
+    border-bottom:1px solid var(--shell-line);
+    background:var(--shell-2);
+    flex-wrap:wrap;
+  }
+  .brand{font-weight:700;letter-spacing:.02em;color:#fff;font-size:14px;margin-right:auto}
+  .brand span{color:var(--shell-dim);font-weight:400;margin-left:8px;font-size:12px}
+
+  .ctl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--shell-dim)}
+  .ctl input[type=range]{width:88px;accent-color:#8fa6c4}
+  select,button{
+    background:#31363e;color:var(--shell-text);border:1px solid var(--shell-line);
+    border-radius:5px;padding:5px 9px;font-size:12px;font-family:inherit;cursor:pointer;
+  }
+  button:hover,select:hover{background:#3b414a}
+  button.go{background:#3f6d99;border-color:#4d80b0;color:#fff;font-weight:600}
+  button.go:hover{background:#4a7fb0}
+  :focus-visible{outline:2px solid #8fb4e0;outline-offset:2px}
+
+  main{flex:1;display:flex;min-height:0}
+
+  .editor{
+    width:38%;min-width:280px;display:flex;flex-direction:column;
+    border-right:1px solid var(--shell-line);background:#1f2229;
+  }
+  .editor .bar{
+    padding:8px 14px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--shell-dim);border-bottom:1px solid var(--shell-line);
+    display:flex;align-items:center;gap:10px;
+  }
+  textarea{
+    flex:1;width:100%;resize:none;border:0;outline:none;
+    background:transparent;color:#dfe4ec;padding:14px;
+    font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    tab-size:2;
+  }
+
+  .stage{flex:1;overflow:auto;padding:26px;display:flex;justify-content:center;align-items:flex-start;background:#22262d}
+  .scaler{transform-origin:top center}
+
+  /* ---------- the printed document ---------- */
+  .page{
+    width:var(--page-w);
+    min-height:var(--page-h);
+    background:#fff;
+    color:var(--ink);
+    padding:var(--pad-y) var(--pad-x);
+    font-family:var(--face);
+    font-size:var(--fs);
+    line-height:var(--lh);
+    box-shadow:0 10px 40px rgba(0,0,0,.45);
+  }
+  .page a{color:inherit;text-decoration:none;border-bottom:.4px solid var(--rule)}
+
+  .name{
+    font-size:1.95em;line-height:1.1;font-weight:700;
+    letter-spacing:.01em;margin:0 0 .28em;
+  }
+  .contact{font-size:.92em;color:var(--ink-soft);margin:0 0 .12em;line-height:1.45}
+
+  h2.sec{
+    font-size:.88em;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+    margin:1.15em 0 .35em;padding-bottom:.16em;border-bottom:.8px solid var(--rule);
+  }
+  .page > *:first-child{margin-top:0}
+
+  p.line{margin:0 0 .3em}
+  .meta{margin:.5em 0 .22em}
+  .meta:first-of-type{margin-top:.2em}
+
+  ul{margin:.1em 0 .35em;padding-left:1.05em}
+  li{margin:0 0 .22em;padding-left:.08em}
+  li::marker{color:var(--ink-soft)}
+
+  .skills p.line{margin:0 0 .16em;padding-left:1.15em;text-indent:-1.15em}
+
+  /* ---------- fit meter ---------- */
+  .meter{
+    display:flex;align-items:center;gap:8px;font-size:12px;
+    padding:5px 10px;border-radius:999px;border:1px solid var(--shell-line);background:#31363e;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--shell-dim)}
+  .meter.ok .dot{background:var(--ok)} .meter.ok{color:var(--ok)}
+  .meter.warn .dot{background:var(--warn)} .meter.warn{color:var(--warn)}
+  .meter.bad .dot{background:var(--bad)} .meter.bad{color:var(--bad)}
+
+  .hint{padding:10px 14px;font-size:11.5px;color:var(--shell-dim);border-top:1px solid var(--shell-line);line-height:1.55}
+  .hint code{background:#2b3038;padding:1px 4px;border-radius:3px;color:#b9c3d1}
+
+  @media (max-width:820px){
+    main{flex-direction:column}
+    .editor{width:100%;height:42%;border-right:0;border-bottom:1px solid var(--shell-line)}
+  }
+
+  /* ---------- print ---------- */
+  @page{ size:A4; margin:0 }
+  @media print{
+    body{background:#fff;display:block}
+    header,.editor,.hint{display:none !important}
+    main{display:block}
+    .stage{padding:0;overflow:visible;display:block;background:#fff}
+    .scaler{transform:none !important}
+    .page{box-shadow:none;width:100%;min-height:0;margin:0}
+    .page a{border-bottom:0}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Resume Press <span>paste · fit · print</span></div>
+
+  <label class="ctl">size
+    <input id="fs" type="range" min="8.6" max="11.6" step="0.1" value="10.2">
+  </label>
+  <label class="ctl">leading
+    <input id="lh" type="range" min="1.12" max="1.55" step="0.01" value="1.30">
+  </label>
+  <label class="ctl">margin
+    <input id="pd" type="range" min="8" max="20" step="0.5" value="12">
+  </label>
+
+  <select id="face" title="Typeface">
+    <option value="Georgia, 'Times New Roman', serif">Georgia</option>
+    <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</option>
+    <option value="Cambria, Georgia, serif">Cambria</option>
+    <option value="Calibri, 'Segoe UI', Arial, sans-serif">Calibri</option>
+  </select>
+
+  <select id="size" title="Paper size">
+    <option value="a4">A4</option>
+    <option value="letter">Letter</option>
+  </select>
+
+  <div id="meter" class="meter"><span class="dot"></span><span id="meterText">—</span></div>
+  <button class="go" id="print">Print to PDF</button>
+</header>
+
+<main>
+  <section class="editor">
+    <div class="bar">Resume text <span style="text-transform:none;letter-spacing:0">— paste Claude's output here</span></div>
+    <textarea id="src" spellcheck="false"></textarea>
+    <div class="hint">
+      Markdown in, resume out. <code>## SECTION</code> for headings, <code>- </code> for bullets,
+      <code>**bold**</code> inline. First line is your name; every line above the first heading becomes a contact line.
+      Handles like <code>github.com/…</code> and email addresses link themselves.
+      <br>Nothing is saved — keep this file, paste fresh each time.
+    </div>
+  </section>
+
+  <section class="stage" id="stage">
+    <div class="scaler" id="scaler">
+      <article class="page" id="page"></article>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const src = $('src'), page = $('page'), scaler = $('scaler'), stage = $('stage');
+
+  /* ---------- inline markdown ---------- */
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function inline(raw){
+    const slots = [];
+    const park = html => { slots.push(html); return '\u0000' + (slots.length-1) + '\u0000'; };
+
+    let s = esc(raw);
+
+    // [text](url)
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m,t,u) =>
+      park('<a href="'+u+'">'+t+'</a>'));
+
+    // bare handles -> linked, visible text stays the handle (ATS-safe)
+    s = s.replace(/\b((?:www\.)?(?:linkedin\.com|github\.com|leetcode\.com|gitlab\.com|[a-z0-9-]+\.github\.io)\/[^\s|,;)<]+)/gi,
+      (m,h) => park('<a href="https://'+h.replace(/^www\./,'')+'">'+h+'</a>'));
+
+    // email
+    s = s.replace(/\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b/g,
+      (m,e) => park('<a href="mailto:'+e+'">'+e+'</a>'));
+
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+
+    return s.replace(/\u0000(\d+)\u0000/g, (m,i) => slots[+i]);
+  }
+
+  const SECTIONS = /^(professional summary|summary|technical skills|skills|professional experience|experience|work experience|projects|project|education|certifications)\b/i;
+
+  function headingOf(line){
+    let m = line.match(/^#{1,4}\s+(.+?)\s*#*$/);
+    if (m) return m[1];
+    const bare = line.replace(/^\*\*(.+)\*\*$/,'$1').trim();
+    const isCaps = bare === bare.toUpperCase() && /[A-Z]/.test(bare) && bare.length < 46;
+    if ((isCaps || line.startsWith('**')) && SECTIONS.test(bare)) return bare;
+    return null;
+  }
+
+  function render(){
+    const lines = src.value.replace(/\r/g,'').split('\n');
+    let out = '', list = null, started = false, headerDone = false, nameDone = false, skills = false;
+
+    const closeList = () => { if (list){ out += '</ul>'; list = null; } };
+
+    for (let raw of lines){
+      const line = raw.trimEnd();
+      if (!line.trim()){ closeList(); continue; }
+
+      const h = headingOf(line);
+      if (h){
+        closeList();
+        if (skills){ out += '</div>'; skills = false; }
+        headerDone = true; started = true;
+        out += '<h2 class="sec">' + inline(h) + '</h2>';
+        if (/skill/i.test(h)){ out += '<div class="skills">'; skills = true; }
+        continue;
+      }
+
+      if (!headerDone){
+        if (!nameDone){ out += '<div class="name">' + inline(line.replace(/^#+\s*/,'')) + '</div>'; nameDone = true; }
+        else out += '<p class="contact">' + inline(line) + '</p>';
+        started = true;
+        continue;
+      }
+
+      const b = line.match(/^\s*(?:[-*•·]|\d+\.)\s+(.*)$/);
+      if (b){
+        if (!list){ out += '<ul>'; list = true; }
+        out += '<li>' + inline(b[1]) + '</li>';
+        continue;
+      }
+
+      closeList();
+      const isMeta = !skills && (line.includes(' | ') || line.includes(' · ') || /^\*\*/.test(line));
+      out += '<p class="line' + (isMeta ? ' meta' : '') + '">' + inline(line) + '</p>';
+    }
+    closeList();
+    if (skills) out += '</div>';
+
+    page.innerHTML = started ? out : '<p class="line" style="color:#8b929c">Paste your resume text on the left.</p>';
+    measure();
+  }
+
+  /* ---------- fit meter ---------- */
+  const meter = $('meter'), meterText = $('meterText');
+
+  function measure(){
+    const cs = getComputedStyle(page);
+    const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    const avail = page.getBoundingClientRect().height / currentScale();
+    const capacity = pxPageHeight() - padY;
+    const used = page.scrollHeight - padY;
+    const pct = capacity > 0 ? (used / capacity) * 100 : 0;
+
+    meter.className = 'meter ' + (pct > 100 ? 'bad' : pct > 94 ? 'warn' : 'ok');
+    meterText.textContent =
+      pct > 100 ? Math.round(pct - 100) + '% over one page'
+      : pct > 94 ? 'Full — ' + Math.round(pct) + '%'
+      : Math.round(pct) + '% of one page';
+    void avail;
+  }
+
+  function pxPageHeight(){
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;visibility:hidden;height:' +
+      (document.documentElement.style.getPropertyValue('--page-h') || '297mm');
+    document.body.appendChild(probe);
+    const h = probe.getBoundingClientRect().height;
+    probe.remove();
+    return h;
+  }
+
+  /* ---------- fit-to-pane scaling ---------- */
+  let scale = 1;
+  const currentScale = () => scale;
+
+  function fitStage(){
+    const avail = stage.clientWidth - 52;
+    const w = page.getBoundingClientRect().width / scale;
+    scale = Math.min(1, avail / w);
+    scaler.style.transform = 'scale(' + scale + ')';
+    scaler.style.height = (page.getBoundingClientRect().height / scale * scale) + 'px';
+    measure();
+  }
+
+  /* ---------- controls ---------- */
+  const root = document.documentElement;
+  const bind = (el, prop, unit) => el.addEventListener('input', () => {
+    root.style.setProperty(prop, el.value + (unit || ''));
+    requestAnimationFrame(() => { fitStage(); measure(); });
+  });
+
+  bind($('fs'), '--fs', 'pt');
+  bind($('lh'), '--lh', '');
+  $('pd').addEventListener('input', e => {
+    root.style.setProperty('--pad-y', e.target.value + 'mm');
+    root.style.setProperty('--pad-x', (parseFloat(e.target.value) + 2) + 'mm');
+    requestAnimationFrame(() => { fitStage(); measure(); });
+  });
+
+  $('face').addEventListener('change', e => {
+    root.style.setProperty('--face', e.target.value);
+    requestAnimationFrame(() => { fitStage(); measure(); });
+  });
+
+  $('size').addEventListener('change', e => {
+    const a4 = e.target.value === 'a4';
+    root.style.setProperty('--page-w', a4 ? '210mm' : '8.5in');
+    root.style.setProperty('--page-h', a4 ? '297mm' : '11in');
+    const sheet = document.styleSheets[0];
+    try {
+      for (const r of sheet.cssRules) if (r.constructor.name === 'CSSPageRule') r.style.size = a4 ? 'A4' : 'Letter';
+    } catch(_){}
+    requestAnimationFrame(() => { fitStage(); measure(); });
+  });
+
+  $('print').addEventListener('click', () => window.print());
+
+  src.addEventListener('input', () => { render(); fitStage(); });
+  window.addEventListener('resize', fitStage);
+
+  src.value = [
+    'ALEX MORGAN',
+    'City, Country | alex.morgan@example.com | +00 0000000000',
+    'linkedin.com/in/example | github.com/example',
+    '',
+    '## Professional Summary',
+    'Backend engineer with three years building and supporting distributed order-processing services — allocation, scheduling, and integration feeds across PostgreSQL, Redis, and a message broker.',
+    '',
+    '## Technical Skills',
+    '**Languages & Frameworks:** Core Java, OOP, Spring Boot, Spring MVC, Spring Data JPA, Spring Security, Hibernate, REST APIs, Microservices',
+    '**Databases & Caching:** PostgreSQL, Redis, stored procedures, indexing, query optimization',
+    '**Messaging & Async:** RabbitMQ, Kafka, scheduled jobs, event-driven patterns',
+    '',
+    '## Professional Experience',
+    '**Backend Engineer** | Example Company | City, Country | Jan 2023 – Present',
+    '- Fixed a race condition in task allocation where concurrent runs reserved the same inventory quantity; replaced read-then-write with a conditional single UPDATE, eliminating downstream shortfalls.',
+    '- Cut a nightly batch job from 22 minutes to under 4 at the largest site by batching per-run lookups and adding a partial index on active records.',
+    '- Traced slow handheld device responses during peak load to unbounded pagination on a suggestion endpoint; added result caps and keyset pagination, reducing p95 from 2.8s to 240ms.',
+    '',
+    '## Projects',
+    '**Example Project — Payments & Ledger Backend** · github.com/example/project',
+    '- Implemented a transactional-outbox and leased-publisher pattern for at-least-once delivery with idempotent consumption, avoiding two-phase commit between the database and the broker.',
+    '',
+    '## Education',
+    'B.Tech — Computer Science, Example University | 2022',
+    '',
+    '',
+    '/* Replace everything above with your own resume text. */'
+  ].join('\n');
+
+  render();
+  requestAnimationFrame(fitStage);
+})();
+</script>
+</body>
+</html>

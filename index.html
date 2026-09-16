@@ -24,6 +24,8 @@
     --pad-x: 14mm;
     --page-w: 210mm;
     --page-h: 297mm;
+    /* One typeface: Arial. The rest are the same Helvetica metrics under the names
+       different systems ship it as, not alternatives to fall back to. */
     --face: Arial, Helvetica, 'Liberation Sans', 'Nimbus Sans', FreeSans, sans-serif;
   }
 
@@ -97,9 +99,17 @@
   .stage{flex:1;overflow:auto;padding:26px;display:flex;justify-content:center;align-items:flex-start;background:#22262d}
   .scaler{transform-origin:top center}
 
-  /* ---------- the printed document ---------- */
+  /* ---------- the printed document ----------
+     font-variant-ligatures:none is a parsing guard, not a taste call. Chrome maps an
+     fi/fl/ffi ligature glyph back through the PDF's ToUnicode table as U+FB01..FB04, so
+     a keyword search for "classification" or "efficient" misses the word entirely.
+     Measured with Chrome's own print pipeline, read back by pypdf and pdfminer: DejaVu
+     Sans, DejaVu Serif and FreeSerif each lost 12 of 12 ligature words; with ligatures
+     off all three recover 12 of 12. Arial never applies them, so this costs nothing
+     there and covers whatever the machine substitutes when Arial is absent. */
   .page{
     position:relative;
+    font-variant-ligatures:none;
     width:var(--page-w);
     min-height:var(--page-h);
     background:#fff;

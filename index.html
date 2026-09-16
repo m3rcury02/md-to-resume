@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Resume Press</title>
 <style>
   :root{
@@ -31,8 +31,11 @@
 
   *{box-sizing:border-box}
   html,body{height:100%}
+  html{-webkit-text-size-adjust:100%}
   body{
     margin:0;
+    height:100dvh;          /* address bar in or out, the shell still fits exactly */
+    overscroll-behavior-y:none;
     background:var(--shell);
     color:var(--shell-text);
     font:14px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -43,15 +46,33 @@
   header{
     display:flex;align-items:center;gap:14px;
     padding:10px 16px;
+    padding-left:max(16px,env(safe-area-inset-left));
+    padding-right:max(16px,env(safe-area-inset-right));
     border-bottom:1px solid var(--shell-line);
     background:var(--shell-2);
     flex-wrap:wrap;
   }
-  .brand{font-weight:700;letter-spacing:.02em;color:#fff;font-size:14px;margin-right:auto}
+  .brand{font-weight:700;letter-spacing:.02em;color:#fff;font-size:14px;margin-right:auto;order:0}
   .brand span{color:var(--shell-dim);font-weight:400;margin-left:8px;font-size:12px}
 
+  /* Source order is the phone order; these keep the wide layout as it was. */
+  .tools{display:flex;align-items:center;flex-wrap:wrap;gap:14px;order:1}
+  #meter{order:2}
+  #print{order:3}
+  .rowbreak,.viewswitch,#toolsToggle{display:none}
+
+  .viewswitch{
+    border:1px solid var(--shell-line);border-radius:7px;overflow:hidden;background:#2a2e35;
+  }
+  .viewswitch button{
+    flex:1;border:0;border-radius:0;background:transparent;padding:9px 14px;font-size:13px;
+  }
+  .viewswitch button.on{background:#3f6d99;color:#fff;font-weight:600}
+  .viewswitch button.on:hover{background:#3f6d99}
+
   .ctl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--shell-dim)}
-  .ctl input[type=range]{width:88px;accent-color:#8fa6c4}
+  /* a sideways drag works the slider, a vertical one still scrolls the page */
+  .ctl input[type=range]{width:88px;accent-color:#8fa6c4;touch-action:pan-y}
   select,button{
     background:#31363e;color:var(--shell-text);border:1px solid var(--shell-line);
     border-radius:5px;padding:5px 9px;font-size:12px;font-family:inherit;cursor:pointer;
@@ -97,7 +118,7 @@
   .scroll{flex:1;overflow:auto;padding:14px;font-size:12.5px;line-height:1.55}
 
   .stage{flex:1;overflow:auto;padding:26px;display:flex;justify-content:center;align-items:flex-start;background:#22262d}
-  .scaler{transform-origin:top center}
+  .scaler{transform-origin:top left}
 
   /* ---------- the printed document ----------
      font-variant-ligatures:none is a parsing guard, not a taste call. Chrome maps an
@@ -155,6 +176,7 @@
   .meter.bad .dot{background:var(--bad)} .meter.bad{color:var(--bad)}
 
   .hint{padding:10px 14px;font-size:11.5px;color:var(--shell-dim);border-top:1px solid var(--shell-line);line-height:1.55}
+  .hint > summary{display:none}
   .hint code{background:#2b3038;padding:1px 4px;border-radius:3px;color:#b9c3d1}
   .note{color:var(--shell-dim);font-size:11.5px;line-height:1.6;display:block}
 
@@ -188,19 +210,81 @@
   .rowbar{display:flex;align-items:center;gap:8px;margin-top:16px}
   .rowbar .grp{margin:0;margin-right:auto}
 
+  /* ---------- touch: no hover, so targets need thumb room ---------- */
+  @media (hover:none){
+    select,button{padding:9px 12px;font-size:13px;min-height:40px}
+    .tabs button.tab{padding:11px 10px;min-height:40px}
+    .tabs #reset{min-height:0;padding:5px 9px}
+    .ctl input[type=range]{height:28px}
+  }
+
+  /* ---------- narrow: stack the panes, fold the controls into a drawer ---------- */
   @media (max-width:820px){
     main{flex-direction:column}
-    .editor{width:100%;height:42%;border-right:0;border-bottom:1px solid var(--shell-line)}
+    .editor{width:100%;min-width:0;height:42%;border-right:0;border-bottom:1px solid var(--shell-line)}
+    .stage{padding:16px}
+
+    header{gap:8px;padding:8px 12px;
+      padding-left:max(12px,env(safe-area-inset-left));
+      padding-right:max(12px,env(safe-area-inset-right));
+    }
+    #meter{order:1;padding:4px 9px;font-size:11.5px}
+    #toolsToggle{display:inline-flex;align-items:center;order:4}
+    #print{order:5}
+    .tools{
+      order:6;flex:0 0 100%;display:none;gap:12px;
+      margin-top:2px;padding:10px 0 2px;border-top:1px solid var(--shell-line);
+    }
+    .tools.open{display:flex}
+    .ctl{flex:1 1 150px;gap:8px}
+    .ctl input[type=range]{flex:1;width:auto;min-width:0}
+    #size,#autofit{flex:1 1 auto}
+
+    .tabs{overflow-x:auto;scrollbar-width:none}
+    .tabs::-webkit-scrollbar{display:none}
+    .tabs button.tab{white-space:nowrap}
+  }
+
+  /* ---------- phone: one view at a time ---------- */
+  @media (max-width:620px){
+    .brand{font-size:13px}
+    .brand span{display:none}
+    .rowbreak{display:block;order:2;flex:0 0 100%;height:0;margin:0}
+    .viewswitch{display:flex;order:3;flex:1 1 auto}
+    .wide{display:none}
+
+    .editor{height:auto;flex:1 1 auto;border-bottom:0}
+
+    /* The view that is off keeps its box laid out: the one-page meter and
+       Fit one page measure the document itself, and display:none would zero it.
+       A collapsed, clipped stage still reports the same page geometry. */
+    body[data-view="write"] .stage{flex:0 0 0;height:0;min-height:0;padding:0;overflow:hidden}
+    body[data-view="preview"] .editor{display:none}
+    body[data-view="preview"] .stage{flex:1 1 auto;height:auto}
+
+    .stage{padding:12px;overscroll-behavior:contain}
+    /* 16px is the threshold below which iOS Safari zooms the page on focus */
+    textarea{font-size:16px;line-height:1.5;padding:12px}
+    .scroll{padding:12px;overscroll-behavior:contain}
+
+    .hint{padding:0 12px calc(12px + env(safe-area-inset-bottom));max-height:40vh;overflow:auto}
+    .hint > summary{
+      display:block;list-style:none;cursor:pointer;
+      padding:11px 0;font-size:12px;font-weight:600;color:#b9c3d1;
+    }
+    .hint > summary::-webkit-details-marker{display:none}
+    .hint > summary::after{content:'+';float:right;color:var(--shell-dim);font-weight:400}
+    .hint[open] > summary::after{content:'\2013'}
   }
 
   /* ---------- print ---------- */
   @page{ size:A4; margin:0 }
   @media print{
-    body{background:#fff;display:block}
+    body{background:#fff;display:block;height:auto}   /* dvh is a screen measure; the page box is not */
     header,.editor,.hint{display:none !important}
     main{display:block}
-    .stage{padding:0;overflow:visible;display:block;background:#fff}
-    .scaler{transform:none !important;height:auto !important}
+    body[data-view] .stage{flex:none;height:auto;min-height:0;padding:0;overflow:visible;display:block;background:#fff}
+    .scaler{transform:none !important;height:auto !important;width:auto !important}
     .page{box-shadow:none;width:100%;min-height:0;margin:0}
     .page a{border-bottom:0}
     /* keep a heading with what follows it, and never split a bullet across pages */
@@ -212,50 +296,63 @@
   @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 </style>
 </head>
-<body>
+<body data-view="write">
 
 <header>
   <div class="brand">Resume Press <span>paste · fit · print</span></div>
 
-  <label class="ctl">size
-    <input id="fs" type="range" min="8.6" max="11.6" step="0.1" value="10.2">
-  </label>
-  <label class="ctl">leading
-    <input id="lh" type="range" min="1.12" max="1.55" step="0.01" value="1.30">
-  </label>
-  <label class="ctl">margin
-    <input id="pd" type="range" min="8" max="20" step="0.5" value="12">
-  </label>
-
-  <select id="size" title="Paper size">
-    <option value="a4">A4</option>
-    <option value="letter">Letter</option>
-  </select>
-
-  <button id="autofit" title="Largest type size that still fits one page">Fit one page</button>
   <div id="meter" class="meter"><span class="dot"></span><span id="meterText">—</span></div>
-  <button class="go" id="print">Print to PDF</button>
+
+  <span class="rowbreak"></span>
+
+  <div class="viewswitch" role="group" aria-label="View">
+    <button type="button" class="on" data-view="write" aria-pressed="true">Edit</button>
+    <button type="button" data-view="preview" aria-pressed="false">Preview</button>
+  </div>
+
+  <button type="button" id="toolsToggle" aria-expanded="false" aria-controls="tools">Layout</button>
+  <button class="go" id="print">Print<span class="wide"> to PDF</span></button>
+
+  <div class="tools" id="tools">
+    <label class="ctl">size
+      <input id="fs" type="range" min="8.6" max="11.6" step="0.1" value="10.2">
+    </label>
+    <label class="ctl">leading
+      <input id="lh" type="range" min="1.12" max="1.55" step="0.01" value="1.30">
+    </label>
+    <label class="ctl">margin
+      <input id="pd" type="range" min="8" max="20" step="0.5" value="12">
+    </label>
+
+    <select id="size" title="Paper size">
+      <option value="a4">A4</option>
+      <option value="letter">Letter</option>
+    </select>
+
+    <button id="autofit" title="Largest type size that still fits one page">Fit one page</button>
+  </div>
 </header>
 
 <main>
   <section class="editor">
     <div class="tabs">
       <button class="tab on" data-tab="write">Resume</button>
-      <button class="tab" data-tab="match">Job match<span id="matchBadge" class="badge">—</span></button>
-      <button class="tab" data-tab="audit">ATS check<span id="auditBadge" class="badge">—</span></button>
+      <button class="tab" data-tab="match"><span class="wide">Job </span>Match<span id="matchBadge" class="badge">—</span></button>
+      <button class="tab" data-tab="audit">ATS<span class="wide"> check</span><span id="auditBadge" class="badge">—</span></button>
       <span class="spacer"></span>
       <button id="reset" title="Discard this draft and reload the sample">Reset</button>
     </div>
 
     <div class="pane on" id="pane-write">
       <textarea id="src" spellcheck="false" aria-label="Resume markdown"></textarea>
-      <div class="hint">
+      <details class="hint" id="hint" open>
+        <summary>Formatting &amp; tips</summary>
         Markdown in, resume out. <code>## SECTION</code> for headings, <code>- </code> for bullets,
         <code>**bold**</code> inline. First line is your name; every line above the first heading becomes a contact line.
         Handles like <code>github.com/…</code> and email addresses link themselves.
         <br>Your draft autosaves in this browser only. When printing, switch off the browser's
         <em>Headers and footers</em> so the date and file path stay off the page.
-      </div>
+      </details>
     </div>
 
     <div class="pane" id="pane-match">
@@ -413,9 +510,15 @@
   let scale = 1;
 
   function fitStage(){
-    const avail = stage.clientWidth - 52;
-    scale = Math.min(1, avail / page.offsetWidth);
+    const cs = getComputedStyle(stage);
+    const avail = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const w = page.offsetWidth;
+    if (!(avail > 0) || !w) return;          // stage collapsed — keep the last good scale
+    scale = Math.min(1, avail / w);
     scaler.style.transform = 'scale(' + scale + ')';
+    // size the box to what the transform actually paints, or the pane scrolls
+    // sideways across the empty half of a page nobody can see
+    scaler.style.width = (w * scale) + 'px';
     scaler.style.height = (page.offsetHeight * scale) + 'px';
   }
 
@@ -746,11 +849,51 @@
   CTRLS.forEach(id => $(id).addEventListener('input', () => { applyVars(); requestAnimationFrame(refresh); }));
   $('size').addEventListener('change', () => { applyVars(); requestAnimationFrame(refresh); });
 
-  $('autofit').addEventListener('click', autoFit);
+  /* ---------- phone chrome: one view at a time ---------- */
+  const phone  = window.matchMedia('(max-width:620px)');   // one view at a time
+  const narrow = window.matchMedia('(max-width:820px)');   // controls behind the drawer
+  const tools = $('tools'), toolsToggle = $('toolsToggle'), hint = $('hint');
+  const viewBtns = Array.from(document.querySelectorAll('.viewswitch button'));
+
+  function setView(v){
+    document.body.dataset.view = v;
+    viewBtns.forEach(b => {
+      const on = b.dataset.view === v;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    requestAnimationFrame(fitStage);
+  }
+  viewBtns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+  function openTools(open){
+    tools.classList.toggle('open', open);
+    toolsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    requestAnimationFrame(fitStage);
+  }
+  toolsToggle.addEventListener('click', () => openTools(!tools.classList.contains('open')));
+
+  // the tips fold away on a phone, where that space belongs to the editor
+  function applyWidth(){
+    if (phone.matches) hint.removeAttribute('open'); else hint.setAttribute('open','');
+    if (!narrow.matches) openTools(false);
+  }
+  [phone, narrow].forEach(m =>
+    m.addEventListener('change', () => { applyWidth(); requestAnimationFrame(fitStage); }));
+
+  // fitting one page is a claim about the document, so show the document
+  $('autofit').addEventListener('click', () => { autoFit(); if (phone.matches) setView('preview'); });
   $('print').addEventListener('click', () => window.print());
   src.addEventListener('input', () => { render(); refresh(); });
   jd.addEventListener('input', () => { updateMatch(); save(); });
-  window.addEventListener('resize', fitStage);
+  let fitPending = false;
+  function queueFit(){
+    if (fitPending) return;
+    fitPending = true;
+    requestAnimationFrame(() => { fitPending = false; fitStage(); });
+  }
+  window.addEventListener('resize', queueFit);
+  window.addEventListener('orientationchange', () => setTimeout(fitStage, 150));
 
   const SAMPLE = [
     'ALEX MORGAN',
@@ -790,6 +933,7 @@
   });
 
   if (!restore()) src.value = SAMPLE;
+  applyWidth();
   applyVars();
   render();
   requestAnimationFrame(() => { fitStage(); measure(); panels(); });

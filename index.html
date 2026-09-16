@@ -24,7 +24,7 @@
     --pad-x: 14mm;
     --page-w: 210mm;
     --page-h: 297mm;
-    --face: Arial, Helvetica, 'Liberation Sans', sans-serif;
+    --face: Arial, Helvetica, 'Liberation Sans', 'Nimbus Sans', FreeSans, sans-serif;
   }
 
   *{box-sizing:border-box}
@@ -547,6 +547,32 @@
       'Add only what you have actually done and can talk through — a term you cannot defend costs you the interview, not the screen.</span>';
   }
 
+  /* ---------- which face actually rendered ---------- */
+  // Nothing reports the resolved font, so compare each name against the three generics:
+  // a name that changes no width against any of them was never installed. Georgia and
+  // Cambria collapsing to one serif is exactly the failure this catches. Installed fonts
+  // do not change mid-session, so measure once.
+  let faceCache;
+  function resolvedFace(){
+    if (faceCache !== undefined) return faceCache;
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:72px';
+    probe.textContent = 'mmmmlliWWW0123456789';
+    document.body.appendChild(probe);
+
+    const width = f => { probe.style.fontFamily = f; return probe.getBoundingClientRect().width; };
+    const generics = ['monospace','serif','sans-serif'].map(g => [g, width(g)]);
+    const installed = n => generics.some(([g,w]) => width('"' + n + '",' + g) !== w);
+
+    faceCache = getComputedStyle(page).fontFamily.split(',')
+      .map(n => n.trim().replace(/^["']|["']$/g,''))
+      .filter(n => !/^(sans-serif|serif|monospace|cursive|fantasy|system-ui)$/i.test(n))
+      .find(installed) || null;
+
+    probe.remove();
+    return faceCache;
+  }
+
   /* ---------- ATS check ---------- */
   function checks(){
     const raw = src.value, low = raw.toLowerCase(), list = [];
@@ -604,6 +630,15 @@
     add(hidden ? 'warn' : 'ok', hidden ? hidden + ' link(s) hide their URL' : 'Link URLs are readable as text',
       hidden ? 'A PDF text extract keeps the label and drops the href. Write the handle out — github.com/you — so it survives parsing.'
              : 'Every link shows its destination in the visible text.');
+
+    const face = resolvedFace();
+    add(face ? 'ok' : 'warn',
+      face ? 'Type resolves to ' + face : 'No Arial-metric face on this machine',
+      face ? 'Requested as ' + face + '; on Linux the system may serve a metric-compatible clone such as Liberation Sans under '
+           + 'that name, which is the intended outcome. Widths match either way, so the page fill below holds on whatever '
+           + 'machine you print from, and Chrome embeds the face into the PDF so a reviewer sees what you see.'
+           : 'Neither Arial, Helvetica nor a metric-compatible clone resolved, so the browser picked a generic sans of unknown '
+           + 'widths. The fill below is right for this machine but will shift on one that has Arial.');
 
     const pct = usedPct();
     add(pct > 100 ? 'bad' : pct > 60 ? 'ok' : 'warn',

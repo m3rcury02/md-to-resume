@@ -24,7 +24,7 @@
     --pad-x: 14mm;
     --page-w: 210mm;
     --page-h: 297mm;
-    --face: Georgia, 'Times New Roman', serif;
+    --face: Arial, Helvetica, 'Liberation Sans', sans-serif;
   }
 
   *{box-sizing:border-box}
@@ -217,13 +217,6 @@
     <input id="pd" type="range" min="8" max="20" step="0.5" value="12">
   </label>
 
-  <select id="face" title="Typeface">
-    <option value="Georgia, 'Times New Roman', serif">Georgia</option>
-    <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</option>
-    <option value="Cambria, Georgia, serif">Cambria</option>
-    <option value="Calibri, 'Segoe UI', Arial, sans-serif">Calibri</option>
-  </select>
-
   <select id="size" title="Paper size">
     <option value="a4">A4</option>
     <option value="letter">Letter</option>
@@ -293,7 +286,7 @@
 
   function inline(raw){
     const slots = [];
-    const park = html => { slots.push(html); return ' ' + (slots.length-1) + ' '; };
+    const park = html => { slots.push(html); return '\u0000' + (slots.length-1) + '\u0000'; };
 
     let s = esc(raw);
 
@@ -312,7 +305,7 @@
     s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
 
-    return s.replace(/ (\d+) /g, (m,i) => slots[+i]);
+    return s.replace(/\u0000(\d+)\u0000/g, (m,i) => slots[+i]);
   }
 
   const SECTIONS = /^(professional summary|summary|profile|objective|technical skills|skills|core competencies|professional experience|experience|work experience|employment|internships?|projects?|academic projects|personal projects|open source|education|certifications?|achievements|accomplishments|awards|publications|positions? of responsibility|activities|coursework|languages|interests)\b/i;
@@ -660,7 +653,7 @@
 
   /* ---------- persistence (this browser, nowhere else) ---------- */
   const KEY = 'resumepress.v1';
-  const CTRLS = ['fs','lh','pd','face','size'];
+  const CTRLS = ['fs','lh','pd','size'];
   let saveTimer;
 
   function save(){
@@ -697,7 +690,6 @@
     root.style.setProperty('--lh', $('lh').value);
     root.style.setProperty('--pad-y', $('pd').value + 'mm');
     root.style.setProperty('--pad-x', (parseFloat($('pd').value) + 2) + 'mm');
-    root.style.setProperty('--face', $('face').value);
     const a4 = $('size').value === 'a4';
     root.style.setProperty('--page-w', a4 ? '210mm' : '8.5in');
     root.style.setProperty('--page-h', a4 ? '297mm' : '11in');
@@ -707,7 +699,6 @@
   function refresh(){ fitStage(); measure(); panels(); save(); }
 
   CTRLS.forEach(id => $(id).addEventListener('input', () => { applyVars(); requestAnimationFrame(refresh); }));
-  $('face').addEventListener('change', () => { applyVars(); requestAnimationFrame(refresh); });
   $('size').addEventListener('change', () => { applyVars(); requestAnimationFrame(refresh); });
 
   $('autofit').addEventListener('click', autoFit);
@@ -749,7 +740,7 @@
     src.value = SAMPLE;
     jd.value = '';
     $('fs').value = '10.2'; $('lh').value = '1.30'; $('pd').value = '12';
-    $('face').selectedIndex = 0; $('size').selectedIndex = 0;
+    $('size').selectedIndex = 0;
     applyVars(); render(); refresh();
   });
 

@@ -476,15 +476,26 @@
      offsetTop/offsetHeight are layout values, untouched by the preview transform, and
      .page is position:relative so its children offset from its own border box. */
   const meter = $('meter'), meterText = $('meterText');
-  let probe;
+
+  /* A page height in px, asked of the browser rather than derived from the unit, so
+     whatever it makes of 297mm or 11in is what the meter divides by. The element that
+     answers is created and removed inside the call: one left parked in the document is
+     a 297mm-tall box sitting at its static position just under the resume, and at print
+     time it paginates like anything else — Chrome opens a second sheet to hold a box
+     that paints nothing. Screen said one page, the print dialog said two. The answer
+     only moves when the paper does, so it is cached against the value it came from. */
+  let pageH = { key:'', px:0 };
 
   function pxPageHeight(){
-    if (!probe){
-      probe = document.createElement('div');
+    const key = getComputedStyle(root).getPropertyValue('--page-h').trim();
+    if (key !== pageH.key){
+      const probe = document.createElement('div');
       probe.style.cssText = 'position:absolute;visibility:hidden;width:0;height:var(--page-h)';
       document.body.appendChild(probe);
+      pageH = { key, px: probe.getBoundingClientRect().height };
+      probe.remove();
     }
-    return probe.getBoundingClientRect().height;
+    return pageH.px;
   }
 
   function usedPct(){
